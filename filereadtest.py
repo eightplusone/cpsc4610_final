@@ -10,7 +10,7 @@ def image2greyscaleMap(file):
 	(width, height) = im.size
 	# Get data from the loaded file
 	greyscale_map = list(im.getdata())
-	# Convert the 
+	# Convert the data into a 2D array
 	greyscale_map = np.array(greyscale_map)
 	greyscale_map = greyscale_map.reshape((height, width))
 
