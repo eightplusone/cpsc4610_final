@@ -18,14 +18,13 @@ require('loadData.lua')
 -- Adjust these numbers if necessary
 --
 local DATASET_SIZE = 90
-local INPUT_SIZE = 67    -- need confirmation
-local HIDDEN_LAYER_SIZE = 6    -- play with this number
+local INPUT_SIZE = 67
+local HIDDEN_LAYER_SIZE = 10    -- play with this number
 local OUTPUT_SIZE = 6
 local LEARNING_RATE = 17e-3
 local LEARNING_RATE_DECAY = 0
 local WEIGHT_DECAY = 1e-2
 local MOMENTUM = 9e-1
-local LAMBDA = 0  -- for regularization
 local MAX_EPOCH = 4e2  -- adjust base on the training result
 local K_FOLD = 6
 local BATCH_SIZE = 15
@@ -44,27 +43,42 @@ local model = nn.Sequential()
 -- Special case: nets with no hidden layer
 local module_00 = nn.Linear(INPUT_SIZE, OUTPUT_SIZE)
 --
--- Normal cases. I pre-define all 5 layers here, but your model may not need
+-- Normal cases. I pre-define all 7 layers here, but your model may not need
 -- all of them.
 local module_01 = nn.Linear(INPUT_SIZE, HIDDEN_LAYER_SIZE)
 local module_02 = nn.Linear(HIDDEN_LAYER_SIZE, HIDDEN_LAYER_SIZE)
 local module_03 = nn.Linear(HIDDEN_LAYER_SIZE, HIDDEN_LAYER_SIZE)
 local module_04 = nn.Linear(HIDDEN_LAYER_SIZE, HIDDEN_LAYER_SIZE)
-local module_05 = nn.Linear(HIDDEN_LAYER_SIZE, OUTPUT_SIZE)
+local module_05 = nn.Linear(HIDDEN_LAYER_SIZE, HIDDEN_LAYER_SIZE)
+local module_06 = nn.Linear(HIDDEN_LAYER_SIZE, HIDDEN_LAYER_SIZE)
+local module_07 = nn.Linear(HIDDEN_LAYER_SIZE, OUTPUT_SIZE)
+--
+-- NOTE: We have this layer below because Torch keeps complaining about
+-- the size of the tensors during backpropagation. It does not count toward
+-- the total number of hidden layers
+local module_out = nn.Linear(OUTPUT_SIZE, 1)
 
 ----------------------------------------------------------------------
 -- Add modules to the neural network. Please do not uncomment both cases.
 --
 -- Special case: nets with no hidden layer
--- model:add(module_00)
+-- NOTE: This model needs another implementation for the training step
+-- due the the mismatch tensor size. We will skip it this time.
+--model:add(module_00)
+--
+-- PLEASE ADJUST THIS NUMBER FIRST
+local NUM_HIDDEN_LAYERS = 6
 --
 -- Normal cases: please make sure you have the right number of hidden layers.
--- The template below represents a neural net with one hidden layer.
+-- The template below represents a neural net with six hidden layer.
 model:add(module_01)
--- model:add(module_02)
--- model:add(module_03)
--- model:add(module_04)
+model:add(module_02)
+model:add(module_03)
+model:add(module_04)
 model:add(module_05)
+model:add(module_06)
+model:add(module_07)
+model:add(module_out)
 
 ----------------------------------------------------------------------
 -- Explanation from https://raw.githubusercontent.com/andresy/torch-demos/master/linear-regression/example-linear-regression.lua
@@ -141,12 +155,9 @@ feval = function(w_new)
   -- Step 3: Compute the gradient of the loss
   -- Step 4: Adjust the weights of the net
   local prediction = model:forward(inputs)
-  local max = getMax(prediction)
-  max = torch.Tensor(max)
-
-  local loss_w = criterion:forward(max, target)
-  local df_dw = criterion:backward(max, target)
-  --model:backward(inputs, dl_dw)
+  local loss_w = criterion:forward(prediction, target)
+  local df_dw = criterion:backward(prediction, target)
+  model:backward(inputs, df_dw)
 
   -- return loss and its derivative
   return loss_w, dl_dw
@@ -170,14 +181,16 @@ state = {
 }
 
 ----------------------------------------------------------------------
--- Run the training
+-- Training
 --
+timer = torch.Timer()
+
 for i = 1, MAX_EPOCH do
   -- This variable is used to estimate the average loss
   currentLoss = 0
 
   -- An epoch is a full loop over our training data
-  for i = 1, DATASET_SIZE do  -- may not be DATASET_SIZE
+  for i = 1, DATASET_SIZE*0.6 do
 
     -- The optim library contains several optimization algorithms.
     -- All of these algorithms assume the same parameters:
@@ -193,13 +206,23 @@ for i = 1, MAX_EPOCH do
     -- (w = weights)
     w_new, fs = optim.sgd(feval, w, state)
 
-    --currentLoss = currentLoss + fs[1]
+    currentLoss = currentLoss + fs[1]
   end
 
   -- report average error on epoch
   currentLoss = currentLoss / DATASET_SIZE
-  --print('current loss = ' .. currentLoss)
+  print('current loss = ' .. currentLoss)
 end
 
+print('Time elapsed: ' .. timer:time().real .. ' seconds')
+
 ----------------------------------------------------------------------
+-- Testing
+prediction = model:forward(data[19][{ {1,INPUT_SIZE} }])
+x = math.floor(prediction[1] + 0.5)
+print(x)
+
+----------------------------------------------------------------------
+-- Log result
 --
+local filename = '../result' .. NUM_HIDDEN_LAYERS .. HIDDEN_LAYER_SIZE .. ''
