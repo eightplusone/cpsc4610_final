@@ -11,12 +11,14 @@
 require 'nn'
 require 'optim'
 require 'gnuplot'
+require('loadData.lua')
 
 ----------------------------------------------------------------------
 -- Configuration
 -- Adjust these numbers if necessary
 --
-local INPUT_SIZE = 40    -- need confirmation
+local DATASET_SIZE = 90
+local INPUT_SIZE = 68    -- need confirmation
 local HIDDEN_LAYER_SIZE = 6    -- play with this number
 local OUTPUT_SIZE = 6
 local LEARNING_RATE = 17e-3
@@ -25,6 +27,10 @@ local WEIGHT_DECAY = 1e-2
 local MOMENTUM = 9e-1
 local LAMBDA = 0  -- for regularization
 local MAX_EPOCH = 4e2  -- adjust base on the training result
+local K_FOLD = 6
+local BATCH_SIZE = 15
+local RUNS_PER_MODEL = 5  -- 5 runs for each model
+local DATAFILE = '../data.txt'
 
 ----------------------------------------------------------------------
 -- Decalre the neural network. By default, we only play with
@@ -39,7 +45,7 @@ local model = nn.Sequential()
 local module_00 = nn.Linear(INPUT_SIZE, OUTPUT_SIZE)
 --
 -- Normal cases. I pre-define all 5 layers here, but your model may not need
--- to add them all.
+-- all of them.
 local module_01 = nn.Linear(INPUT_SIZE, HIDDEN_LAYER_SIZE)
 local module_02 = nn.Linear(HIDDEN_LAYER_SIZE, HIDDEN_LAYER_SIZE)
 local module_03 = nn.Linear(HIDDEN_LAYER_SIZE, HIDDEN_LAYER_SIZE)
@@ -70,6 +76,21 @@ model:add(module_05)
 --
 local criterion = nn.MSECriterion()
 criterion.sizeAverage = false
+
+----------------------------------------------------------------------
+-- Prepare data
+-- We use 6-fold cross-validation technique here.
+-- With 90 entries in the dataset, we shuffle and divide them into 6 subsets,
+-- each subset contains 15 entries.
+-- In each subset, we pick 9 entries for the training set, 3 for
+-- validation, and 3 for testing.
+local data = loadData(DATAFILE)
+data = torch.Tensor(data)
+--
+-- Generate a random permutation of a sequence between 1 and DATASET_SIZE
+local indices = torch.randperm(DATASET_SIZE)
+--
+-- 
 
 ----------------------------------------------------------------------
 -- Training function
@@ -104,7 +125,7 @@ feval = function(w_new)
   end
 
   -- Need to define inputs here
-  local inputs = ...
+  --local inputs = ...
 
   -- Reset the gradients (by default, they are always accumulated)
   dl_dw:zero()
@@ -141,3 +162,37 @@ state = {
 }
 
 ----------------------------------------------------------------------
+-- Run the training
+--
+for i = 1, MAX_EPOCH do
+  -- This variable is used to estimate the average loss
+  currentLoss = 0
+
+  -- An epoch is a full loop over our training data
+  for i = 1, DATASET_SIZE do  -- may not be DATASET_SIZE
+
+    -- The optim library contains several optimization algorithms.
+    -- All of these algorithms assume the same parameters:
+    --   + a closure that computes the loss, and its gradient wrt to w,
+    --     given a point w
+    --   + a point w
+    --   + state of the net, which are algorithm-specific
+    -- Functions in optim all return two things:
+    --   + the new w, found by the optimization method (here SGD)
+    --   + the value of the loss functions at all points that were used by
+    --     the algorithm. SGD only estimates the function once, so
+    --     that list just contains one value.
+    -- (w = weights)
+    --w_new, fs = optim.sgd(feval, w, state)
+
+    --currentLoss = currentLoss + fs[1]
+  end
+
+  -- report average error on epoch
+  currentLoss = currentLoss / DATASET_SIZE
+  --print('current loss = ' .. currentLoss)
+end
+
+----------------------------------------------------------------------
+-- Test the model
+--
