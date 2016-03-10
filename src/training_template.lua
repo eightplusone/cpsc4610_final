@@ -18,7 +18,7 @@ require('loadData.lua')
 -- Adjust these numbers if necessary
 --
 local DATASET_SIZE = 90
-local INPUT_SIZE = 68    -- need confirmation
+local INPUT_SIZE = 67    -- need confirmation
 local HIDDEN_LAYER_SIZE = 6    -- play with this number
 local OUTPUT_SIZE = 6
 local LEARNING_RATE = 17e-3
@@ -86,11 +86,11 @@ criterion.sizeAverage = false
 -- validation, and 3 for testing.
 local data = loadData(DATAFILE)
 data = torch.Tensor(data)
+local input = data[{ {INPUT_SIZE+1} }]
+local labels = data[{ {1,INPUT_SIZE} }]
 --
 -- Generate a random permutation of a sequence between 1 and DATASET_SIZE
 local indices = torch.randperm(DATASET_SIZE)
---
--- 
 
 ----------------------------------------------------------------------
 -- Training function
@@ -124,8 +124,13 @@ feval = function(w_new)
     w:copy(w_new)
   end
 
-  -- Need to define inputs here
-  --local inputs = ...
+  -- select a new training sample
+  _nidx_ = (_nidx_ or 0) + 1
+  if _nidx_ > (#data)[1] then _nidx_ = 1 end
+
+  local sample = data[_nidx_]
+  local target = sample[{ {INPUT_SIZE+1} }]    -- this funny looking syntax allows
+  local inputs = sample[{ {1,INPUT_SIZE} }]    -- slicing of arrays.
 
   -- Reset the gradients (by default, they are always accumulated)
   dl_dw:zero()
@@ -136,9 +141,12 @@ feval = function(w_new)
   -- Step 3: Compute the gradient of the loss
   -- Step 4: Adjust the weights of the net
   local prediction = model:forward(inputs)
-  local loss_w = criterion:forward(prediction, targets)
-  local df_dw = criterion:backward(prediction, targets)
-  model:backward(inputs, df_dw)
+  local max = getMax(prediction)
+  max = torch.Tensor(max)
+
+  local loss_w = criterion:forward(max, target)
+  local df_dw = criterion:backward(max, target)
+  --model:backward(inputs, dl_dw)
 
   -- return loss and its derivative
   return loss_w, dl_dw
@@ -183,7 +191,7 @@ for i = 1, MAX_EPOCH do
     --     the algorithm. SGD only estimates the function once, so
     --     that list just contains one value.
     -- (w = weights)
-    --w_new, fs = optim.sgd(feval, w, state)
+    w_new, fs = optim.sgd(feval, w, state)
 
     --currentLoss = currentLoss + fs[1]
   end
@@ -194,5 +202,4 @@ for i = 1, MAX_EPOCH do
 end
 
 ----------------------------------------------------------------------
--- Test the model
 --
