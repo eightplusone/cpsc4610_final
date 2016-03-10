@@ -1,0 +1,20 @@
+
+----- Run #1 -----
+Duration: 0.70508504845202
+Test Accuracy: 83.333333333333
+
+----- Run #2 -----
+Duration: 0.71789193188306
+Test Accuracy: 83.333333333333
+
+----- Run #3 -----
+Duration: 0.71688600885682
+Test Accuracy: 83.333333333333
+
+----- Run #4 -----
+Duration: 0.73542900104076
+Test Accuracy: 83.333333333333
+
+----- Run #5 -----
+Duration: 0.72001289168838
+Test Accuracy: 83.333333333333
