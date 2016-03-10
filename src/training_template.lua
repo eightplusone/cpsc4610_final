@@ -19,15 +19,15 @@ require('loadData.lua')
 --
 local DATASET_SIZE = 90
 local INPUT_SIZE = 67
-local HIDDEN_LAYER_SIZE = 6    -- play with this number
+local HIDDEN_LAYER_SIZE = 6    -- number of nodes per hidden layer. Play with this number: change it to 4, 6, 8, 10, 12
 local OUTPUT_SIZE = 6
 local LEARNING_RATE = 17e-3
 local LEARNING_RATE_DECAY = 0
 local WEIGHT_DECAY = 1e-2
 local MOMENTUM = 9e-1
-local MAX_EPOCH = 4e2  -- adjust base on the training result
-local K_FOLD = 6
-local BATCH_SIZE = 15
+local MAX_EPOCH = 4e2  -- adjust base on the training result. Increase if the graph doesn't converge.
+--local K_FOLD = 6  -- not implemented
+--local BATCH_SIZE = 15  -- not implemented
 local RUNS_PER_MODEL = 5  -- 5 runs for each model
 local DATAFILE = '../data.txt'
 
@@ -72,11 +72,11 @@ local NUM_HIDDEN_LAYERS = 6
 -- Normal cases: please make sure you have the right number of hidden layers.
 -- The template below represents a neural net with six hidden layer.
 model:add(module_01)
---model:add(module_02)
---model:add(module_03)
---model:add(module_04)
---model:add(module_05)
---model:add(module_06)
+model:add(module_02)
+model:add(module_03)
+model:add(module_04)
+model:add(module_05)
+model:add(module_06)
 model:add(module_07)
 model:add(module_out)
 
