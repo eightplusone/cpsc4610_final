@@ -1,6 +1,6 @@
 function loadData(fileLocation)
 	local file = io.open(fileLocation)
-	local ret = {}	
+	local ret = {}
 
 	if file then
 		local lineCounter = 1
@@ -25,3 +25,14 @@ function split(line)
 	end
 end
 
+----------------------------------------------------------------------
+-- Get the biggest value in a tensor
+--
+function getMax(values)
+  local max = {}
+	max[1] = 1
+  for i = 2, 6 do
+    if values[i] > values[max[1]] then max[1] = i end
+  end
+  return max
+end
