@@ -1,4 +1,4 @@
-# cpsc4610_final
-# Nothing here yet
+Group project for Artificial Intelligence course at Seattle University, Winter 2016.
 
-https://en.wikipedia.org/wiki/Facial_Action_Coding_System#cite_ref-2
+Report:
+https://docs.google.com/document/d/1XektmIpdybeU4iWQcsObtmvDFN9LfkePfColLLOM5Ks/edit?usp=sharing
